@@ -33,6 +33,121 @@ FreeRTOS-Plus-FAT    [Contains the source files that implement the FAT FS]
 
 The FreeRTOS+FAT Directory Structure
 ```
+## Standard API errno Values
+
+| **Value** | **Constant**                   | **Description**                               |
+| --------- | ------------------------------ | --------------------------------------------- |
+| 0         | pdFREERTOS_ERRNO_NONE          | No such file or directory                     |
+| 2         | pdFREERTOS_ERRNO_ENOENT        | No such file or directory                     |
+| 5         | pdFREERTOS_ERRNO_EIO           | I/O error                                     |
+| 6         | pdFREERTOS_ERRNO_ENXIO         | No such device or address                     |
+| 9         | pdFREERTOS_ERRNO_EBADF         | Bad file number                               |
+| 11        | pdFREERTOS_ERRNO_EAGAIN        | No more processes                             |
+| 11        | pdFREERTOS_ERRNO_EWOULDBLOCK   | Operation would block                         |
+| 12        | pdFREERTOS_ERRNO_ENOMEM        | Not enough core                               |
+| 13        | pdFREERTOS_ERRNO_EACCES        | Permission denied                             |
+| 14        | pdFREERTOS_ERRNO_EFAULT        | Bad address                                   |
+| 16        | pdFREERTOS_ERRNO_EBUSY         | Mount device busy                             |
+| 17        | pdFREERTOS_ERRNO_EEXIST        | File exists                                   |
+| 18        | pdFREERTOS_ERRNO_EXDEV         | Cross-device link                             |
+| 19        | pdFREERTOS_ERRNO_ENODEV        | No such device                                |
+| 20        | pdFREERTOS_ERRNO_ENOTDIR       | Not a directory                               |
+| 21        | pdFREERTOS_ERRNO_EISDIR        | Is a directory                                |
+| 22        | pdFREERTOS_ERRNO_EINVAL        | Invalid argument                              |
+| 28        | pdFREERTOS_ERRNO_ENOSPC        | No space left on device                       |
+| 29        | pdFREERTOS_ERRNO_ESPIPE        | Illegal seek                                  |
+| 30        | pdFREERTOS_ERRNO_EROFS         | Read only file system                         |
+| 42        | pdFREERTOS_ERRNO_EUNATCH       | Protocol driver not attached                  |
+| 50        | pdFREERTOS_ERRNO_EBADE         | Invalid exchange                              |
+| 79        | pdFREERTOS_ERRNO_EFTYPE        | Inappropriate file type or format             |
+| 89        | pdFREERTOS_ERRNO_ENMFILE       | No more files                                 |
+| 90        | pdFREERTOS_ERRNO_ENOTEMPTY     | Directory not empty                           |
+| 91        | pdFREERTOS_ERRNO_ENAMETOOLONG  | File or path name too long                    |
+| 95        | pdFREERTOS_ERRNO_EOPNOTSUPP    | Operation not supported on transport endpoint |
+| 105       | pdFREERTOS_ERRNO_ENOBUFS       | No buffer space available                     |
+| 109       | pdFREERTOS_ERRNO_ENOPROTOOPT   | Protocol not available                        |
+| 112       | pdFREERTOS_ERRNO_EADDRINUSE    | Address already in use                        |
+| 116       | pdFREERTOS_ERRNO_ETIMEDOUT     | Connection timed out                          |
+| 119       | pdFREERTOS_ERRNO_EINPROGRESS   | Connection already in progress                |
+| 120       | pdFREERTOS_ERRNO_EALREADY      | Socket already connected                      |
+| 125       | pdFREERTOS_ERRNO_EADDRNOTAVAIL | Address not available                         |
+| 127       | pdFREERTOS_ERRNO_EISCONN       | Socket is already connected                   |
+| 128       | pdFREERTOS_ERRNO_ENOTCONN      | Socket is not connected                       |
+| 135       | pdFREERTOS_ERRNO_ENOMEDIUM     | No medium inserted                            |
+| 138       | pdFREERTOS_ERRNO_EILSEQ        | An invalid UTF-16 sequence was encountered    |
+| 140       | pdFREERTOS_ERRNO_ECANCELED     | Operation cancelled                           |
+
+## 常用API
+
+### FAT库自带的API
+
+#### 分区函数
+
+`FF_Error_t FF_Partition( FF_Disk_t *pxDisk, FF_PartitionParameters *pxFormatParameters );`
+
+| **Parameters:**       | Description：                                                |
+| --------------------- | ------------------------------------------------------------ |
+| pxDisk                | The FF_Disk_t structure that describes the media being partitioned. |
+| *FF_FormatParameters* | A pointer to a structure that describes how the media will be partitioned. |
+
+**Returns:** If the media is successfully partitioned then FF_ERR_NONE is returned. If the media could not be partitioned then an error code is returned. FF_GetErrMessage() converts error codes into error descriptions.
+
+```c
+typedef enum _FF_SizeType
+{
+/* xSizes within the FF_PartitionParameters structure are specified as a
+quotum (the sum of all xSizes is free, all disk space will be allocated). */
+eSizeIsQuota,
+
+/* xSizes within the FF_PartitionParameters structure are specified as a
+percentage of the total disk space (the sum of all xSizes must be <= 100%) */
+eSizeIsPercent,
+
+/* xSizes within the FF_PartitionParameters structure are specified as a
+number of sectors (the sum of all xSizes must be < ulSectorCount). */
+FF_Size_Sectors,
+} eSizeType_t;
+
+typedef struct _FF_PartitionParameters
+{
+/* The total number of sectors on the media, including hidden/reserved
+sectors. */
+uint32_t ulSectorCount;
+
+/* The number of sectors to keep free. */
+uint32_t ulHiddenSectors;
+
+/* The number of sectors to keep between partitions. */
+uint32_t ulInterSpace;
+
+/* The size of each partition – how the sizes are specified depends on the
+value of eSizeType. */
+BaseType_t xSizes[ FF_MAX_PARTITIONS ];
+
+/* The number of primary partitions to create. 要创建的主分区数量*/
+BaseType_t xPrimaryCount;
+
+/* How the values within the xSizes array are specified. */
+eSizeType_t eSizeType;
+} FF_PartitionParameters;
+
+The FF_PartitionParameters and associated types
+```
+
+#### 挂载设备函数
+
+`FF_Error_t FF_Mount( FF_Disk_t *pxDisk, BaseType_t xPartitionNumber );`
+
+| **Parameters:**    | Description：                                                |
+| ------------------ | ------------------------------------------------------------ |
+| pxDisk             | The FF_Disk_t structure that describes the media being partitioned. |
+| *xPartitionNumber* | The number of the partition on the media to mount. Partition numbers start from 0. |
+
+**Returns:**
+
+If the partition was successfully mounted then FF_ERR_NONE is returned. If the partition could not be mounted then an error code is returned. FF_GetErrMessage() converts error codes into error descriptions.
+
+
 
 ## Configuration Option
 
@@ -72,246 +187,177 @@ Set to 0 to only include a file’s long name.
 
   #### ffconfigSHORTNAME_CASE
 
-  Set to 1 to recognise and apply the case bits used by Windows XP+ when using short file names – storing file names such as “readme.TXT” or “SETUP.exe” in a short-name entry. This is the recommended setting for maximum compatibility.
-
-  Set to 0 to ignore the case bits.
-
-  
+是否支持大小写的识别，1表示支持(建议支持以获得最大兼容性)
 
   #### ffconfigUNICODE_UTF16_SUPPORT
 
-  Only used when ffconfigLFN_SUPPORT is set to 1.
+在ffconfigLFN_SUPPORT 设为1时有效
 
-  Set to 1 to use UTF-16 (wide-characters) for file and directory names.
+设置1表示文件名和目录名用UTF-16 (wide-characters)格式
 
-  Set to 0 to use either 8-bit ASCII or UTF-8 for file and directory names (see the ffconfigUNICODE_UTF8_SUPPORT).
-
-  
+设置0表示文件名和目录名用8-bit ASCII || UTF-8格式（具体格式取决于ffconfigUNICODE_UTF8_SUPPORT设置）
 
   #### ffconfigUNICODE_UTF8_SUPPORT
 
-  Only used when ffconfigLFN_SUPPORT is set to 1.
+在ffconfigLFN_SUPPORT 设为1时有效
 
-  Set to 1 to use UTF-8 encoding for file and directory names.
+设置为1表示用UTF-8格式
 
-  Set to 0 to use either 8-bit ASCII or UTF-16 for file and directory names (see the ffconfig_UTF_16_SUPPORT setting).
-
-  
+设置为0表示用8-bit ASCII || UTF-16格式(具体格式取决于ffconfig_UTF_16_SUPPORT 设置)
 
   #### ffconfigFAT12_SUPPORT
 
-  Set to 1 to include FAT12 support.
+设置为1表示支持FAT12
 
-  Set to 0 to exclude FAT12 support.
-
-  FAT16 and FAT32 are always enabled.
-
-  
+FAT16和FAT32总是支持
 
   #### ffconfigOPTIMISE_UNALIGNED_ACCESS
 
-  When writing and reading data, i/o becomes less efficient if sizes other than 512 bytes are being used. When set to 1 each file handle will allocate a 512-byte character buffer to facilitate “unaligned access”.
+如果写入和读取数据时，大小超过512字节，效率下降
 
-  
+当改配置设置为1，设置为1时，每个文件句柄将分配一个512字节的字符缓冲区，以方便“未对齐访问”
 
   #### ffconfigCACHE_WRITE_THROUGH
 
-  Input and output to a disk uses buffers that are only flushed at the following times:
+磁盘的输入输出**缓存区**仅在以下时候刷新：
 
-  
++ 当需要新的缓冲区并且没有其他缓冲区可用时。
++ 当以READ模式为刚刚更改的扇区打开缓冲区时。
++ 在创建、移动或关闭一个文件或者目录时。
 
-  - When a new buffer is needed and no other buffers are available.
-  - When opening a buffer in READ mode for a sector that has just been changed.
-  - After creating, removing or closing a file or a directory.
+通常，这足够快且有效。 如果将ffconfigCACHE_WRITE_THROUGH设置为1，则每次释放缓冲区时也会刷新缓冲区，效率较低，但更安全。
 
-  Normally this is quick enough and it is efficient. If ffconfigCACHE_WRITE_THROUGH is set to 1 then buffers will also be flushed each time a buffer is released – which is less efficient but more secure.
-
-  
 
   #### ffconfigWRITE_BOTH_FATS
 
-  In most cases, the FAT table has two identical copies on the disk, allowing the second copy to be used in the case of a read error. If
+在大多数情况下，FAT表在磁盘上具有两个相同的副本，从而在发生读取错误的情况下可以使用第二个副本。
 
-  Set to 1 to use both FATs – this is less efficient but more secure.
+设置1表示使用所有的FATS，这样效率会低但是更安全。
 
-  Set to 0 to use only one FAT – the second FAT will never be written to.
-
-  
+设置0表示只使用一个FAT，第二个FAT将不会被使用。
 
   #### ffconfigWRITE_FREE_COUNT
 
-  Set to 1 to have the number of free clusters and the first free cluster to be written to the FS info sector each time one of those values changes.
+关系到**启动速度**，设置为1启动速度快，但是效率低。
 
-  Set to 0 not to store these values in the FS info sector, making booting slower, but making changes faster.
+设置为1以具有空闲集群的数量，并且每当其中一个值更改时，第一个空闲集群将被写入FS信息扇区。
 
-  
+设置为0不会将这些值存储在FS信息扇区中，从而使启动速度较慢，但更改速度更快。
 
   #### ffconfigTIME_SUPPORT
 
-  Set to 1 to maintain file and directory time stamps for creation, modify and last access.
-
-  Set to 0 to exclude time stamps.
+设置1表示可以维护文件和目录的创建、修改和最后访问的时间戳。
 
   If time support is used, the following function must be supplied:
 
   ```
   time_t FreeRTOS_time( time_t *pxTime );
-  		
   ```
 
   FreeRTOS_time has the same semantics as the standard time() function.
 
-  
-
   #### ffconfigREMOVABLE_MEDIA
 
-  Set to 1 if the media is removable (such as a memory card).
+是否是可移动介质
 
-  Set to 0 if the media is not removable.
-
-  When set to 1 all file handles will be “invalidated” if the media is extracted. If set to 0 then file handles will not be invalidated. In that case the user will have to confirm that the media is still present before every access.
-
-  
+设置为1时，如果存储介质被取走，则所有文件句柄都将“无效”。 如果设置为0，则文件句柄将不会无效。 在这种情况下，用户将必须在每次访问之前确认媒体仍然存在。
 
   #### ffconfigMOUNT_FIND_FREE
 
-  Set to 1 to determine the disk’s free space and the disk’s first free cluster when a disk is mounted.
+设置为1可以确定磁盘的可用空间以及挂载磁盘时磁盘的第一个可用集群。    
 
-  Set to 0 to find these two values when they are first needed. Determining the values can take some time.
-
-  
+设置为0可以在首次需要这两个值时找到它们。 确定这些值可能需要一些时间。
 
   #### ffconfigFSINFO_TRUSTED
 
-  Set to 1 to ‘trust’ the contents of the ‘ulLastFreeCluster’ and ulFreeClusterCount fields.
-
-  Set to 0 not to ‘trust’ these fields.
-
-  
+决定是否信任‘ulLastFreeCluster’和ulFreeClusterCount字段的内容。
 
   #### ffconfigPATH_CACHE
 
-  Set to 1 to store recent paths in a cache, enabling much faster access when the path is deep within a directory structure at the expense of additional RAM usage.
-
-  Set to 0 to not use a path cache.
-
-  
+是否使用路径缓存(占用空间换取效率上的提升)
 
   #### ffconfigPATH_CACHE_DEPTH
 
-  Only used if ffconfigPATH_CACHE is 1.
-
-  Sets the maximum number of paths that can exist in the patch cache at any one time.
-
-  
+定义最大数量的路径缓存
 
   #### ffconfigHASH_CACHE
 
-  Set to 1 to calculate a HASH value for each existing short file name. Use of HASH values can improve performance when working with large directories, or with files that have a similar name.
+是否使用HASH值
 
-  Set to 0 not to calculate a HASH value.
-
-  
+当遇到大型目录或文件名称相似的情况时，可以提高效率
 
   #### ffconfigHASH_FUNCTION
 
-  Only used if ffconfigHASH_CACHE is set to 1
+当ffconfigHASH_CACHE为1时有效
 
-  Set to CRC8 or CRC16 to use 8-bit or 16-bit HASH values respectively.
-
-  
+设置为CRC8或CRC16分别使用8位或16位HASH值。
 
   #### ffconfigMKDIR_RECURSIVE
 
-  Set to 1 to add a parameter to ff_mkdir() that allows an entire directory tree to be created in one go, rather than having to create one directory in the tree at a time. For example mkdir( “/etc/settings/network”, pdTRUE );. Set to 0 to use the normal mkdir() semantics (without the additional parameter).
+设置为1可向ff_mkdir（）添加一个参数，该参数允许一次创建整个目录树，而不必一次在树中创建一个目录。
 
-  
+ 例如`mkdir( "/etc/settings/network"，pdTRUE);`
+
+设置为0以使用常规的mkdir（）语义（不带附加参数）。
 
   #### ffconfigBLKDEV_USES_SEM
 
-  Set to 1 for each call to fnReadBlocks and fnWriteBlocks to be performed with a semphore lock.
-
-  Set to 0 for each call to fnReadBlocks and fnWriteBlocks not to use an additional semaphore.
-
-  
+设定调用fnReadBlocks 和fnWriteBlocks 两个函数时是否加锁  
 
   #### ffconfigMALLOC
 
-  Set to a function that will be used for all dynamic memory allocations. Setting to pvPortMalloc() will use the same memory allocator as FreeRTOS. For example: `#define ffconfigMALLOC( size ) pvPortMalloc( size )`
-
-  
+定义内存分配函数`#define ffconfigMALLOC(size) pvPortMalloc(size)`
 
   #### ffconfigFREE
 
-  Set to a function that matches the above allocator defined with ffconfigMALLOC. Setting to vPortFree() will use the same memory free function as FreeRTOS. For example: `#define ffconfigFREE( ptr ) vPortFree( ptr )`
-
-  
+定义内存释放函数 `#define ffconfigFREE( ptr ) vPortFree( ptr )`
 
   #### ffconfig64_NUM_SUPPORT
 
-  Set to 1 to calculate the free size and volume size as a 64-bit number.
-
-  Set to 0 to calculate these values as a 32-bit number.
-
-  
+设置为1用**64位数据类型**计算空闲大小和文件大小，否则用**32位数据类型**
 
   #### ffconfigMAX_PARTITIONS
 
-  Defines the maximum number of partitions (and also logical partitions) that can be recognised.
-
-  
+定义可以识别的最大分区数（以及逻辑分区）
 
   #### ffconfigMAX_FILE_SYS
 
-  Defines how many drives can be combined in total. Should be set to at least 2.
-
-  
+定义总共可以合并多少个驱动器。 **至少应设置为2**。
 
   #### ffconfigDRIVER_BUSY_SLEEP_MS
 
-  In case the low-level driver returns an error ‘FF_ERR_DRIVER_BUSY’, the library will pause for a number of ms, defined in ffconfigDRIVER_BUSY_SLEEP_MS before re-trying.
-
-  
+如果底层驱动程序返回错误“ FF_ERR_DRIVER_BUSY”，则库将暂停时间（ms），在ffconfigDRIVER_BUSY_SLEEP_MS中定义，然后重试。
 
   #### ffconfigFPRINTF_SUPPORT
 
-  Set to 1 to include the ff_fprintf() function in the build.
+选择构建是否包含`ff_fprintf()`函数
 
-  Set to 0 to exclude the ff_fprintf() function from the build.
-
-  ff_fprintf() is quite a heavy function because it allocates RAM and brings in a lot of string and variable argument handling code. If ff_fprintf() is not being used then the code size can be reduced by setting ffconfigFPRINTF_SUPPORT to 0.
-
-  
+不包含`ff_fprintf`函数可以大大减少代码大小
 
   #### ffconfigFPRINTF_BUFFER_LENGTH
 
-  ff_fprintf() will allocate a buffer of this size in which it will create its formatted string. The buffer will be freed before the function exits.
-
-  
+设置`ff_fprintf()`分配的缓存区大小
 
   #### ffconfigINLINE_MEMORY_ACCESS
 
-  Set to 1 to inline some internal memory access functions.
-
-  Set to 0 not to use inline memory access functions.
-
-  
+一些内部存储器访问功能是否使用`inline`语法
 
   #### ffconfigFAT_CHECK
 
-  Officially the only criteria to determine the FAT type (12, 16, or 32 bits) is the total number of clusters:
+正式的决定FAT种类的唯一条件是簇的总量：
 
-  if( ulNumberOfClusters < 4085 ) : Volume is FAT12
-  if( ulNumberOfClusters < 65525 ) : Volume is FAT16
-  if( ulNumberOfClusters >= 65525 ) : Volume is FAT32
-  Not every formatted device follows the above rule.
++ if( ulNumberOfClusters < 4085 ) : Volume is FAT12
++ if( ulNumberOfClusters < 65525 ) : Volume is FAT16
++  if( ulNumberOfClusters >= 65525 ) : Volume is FAT32
 
-  Set to 1 to perform additional checks over and above inspecting the number of clusters on a disk to determine the FAT type.
+并非每个格式化的设备都遵循以上规则
 
-  Set to 0 to only look at the number of clusters on a disk to determine the FAT type.
+设置为1可以执行另外的检查并且检查磁盘上的簇以决定FAT种类。
 
-  
+设置为0只检查磁盘上的簇以决定FAT种类。
 
   #### ffconfigMAX_FILENAME
 
-  Sets the maximum length for file names, including the path. Note that the value of this define is directly related to the maximum stack use of the +FAT library. In some API’s, a character buffer of size ‘ffconfigMAX_FILENAME’ will be declared on stack.
+设置文件名的最大长度，包括路径。 请注意，此定义的值与FAT库的最大堆栈使用量直接相关。 在某些API中，将在堆栈中声明大小为'ffconfigMAX_FILENAME'的字符缓冲区。
+
+
