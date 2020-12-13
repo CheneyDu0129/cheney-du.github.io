@@ -147,6 +147,10 @@ The FF_PartitionParameters and associated types
 
 If the partition was successfully mounted then FF_ERR_NONE is returned. If the partition could not be mounted then an error code is returned. FF_GetErrMessage() converts error codes into error descriptions.
 
+## 自定义接口Porting
+
+#### 创建一个存储介质驱动
+
 
 
 ## Configuration Option
