@@ -153,6 +153,11 @@ If the partition was successfully mounted then FF_ERR_NONE is returned. If the p
 
 
 
+## 移植要点
+
++ 实现`#define portINLINE __inline`
++ 实现FF_PRINTF
+
 ## Configuration Option
 
 必须提供==FreeRTOSFATConfig.h==文件
